@@ -1,3 +1,7 @@
+---
+import { getCollection } from 'astro:content';
+let jan = await getCollection('jan');
+---
 <!doctype html>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width" />
@@ -41,6 +45,12 @@ html, body, #selo {
     margin: 1em;
 }
 
+#sitelenma {
+    border: 0;
+    width: 100%;
+    height: 100%;
+}
+
 </style>
 
 <!-- selo -->
@@ -48,20 +58,173 @@ html, body, #selo {
     <div>
     <!-- toki -->
     <div class="toki">
-
         <h1>toki pona li lon ma!</h1>
         <p>lipu ma ni la o lukin e ni: ma la jan pi toki pona li lon seme? sina wile la <a href="https://forms.gle/nEGMiM73Td5PWwZP8">o pana e sina tawa lipu ma!</a>
-        <aside>ni li wile sina ala la, sina alasa e <a href="https://discord.gg/6zkugJFU4x"><em>ma pona pi toki pona</em> lon ilo Siko</a> anu seme?</aside>
-
+        <aside>ni li wile sina ala la, sina alasa e <a href="https://discord.gg/BCVCVJbVdQ"><em>ma pona pi toki pona</em> lon ilo Siko</a> anu seme?</aside>
     </div>
     </div> <!-- poki selo namako li lon tan ni: ni ala la weka sewi pi poki h1 en weka sewi pi poki .toki li kama weka tu li kama ala wan li suli ike lukin. -->
 
     <!-- lipu ma -->
-    <iframe src="https://umap.openstreetmap.fr/en/map/lipu-pi-sona-ma_1114317"
-            style="
-                   border: 0;
-                   width: 100%;
-                   height: 100%;
-                   "
-            allowfullscreen>
+    <div id="sitelenma" data-jan={JSON.stringify(jan)}>
+    </div>
 </div>
+
+<script>
+    import * as maplibregl from 'maplibre-gl';
+    import 'maplibre-gl/dist/maplibre-gl.css';
+
+    import rtlPluginUrl from '/node_modules/@mapbox/mapbox-gl-rtl-text/dist/mapbox-gl-rtl-text.js?url';
+    maplibregl.setRTLTextPlugin(rtlPluginUrl);
+
+    const sitelenma = new maplibregl.Map({
+        container: document.getElementById('sitelenma'),
+        style: 'https://tiles.openfreemap.org/styles/liberty',
+        center: [0, 30],
+        zoom: 2,
+        hash: true,
+    });
+    window.sitelenma = sitelenma;
+
+    function oPonaESelo() {
+        let nimiToki = 'tok';
+        let selo = sitelenma.getStyle();
+        for (let lipu of selo.layers) {
+            if (lipu.id === "label_state") lipu.minzoom = 3;
+            if (lipu.id == "boundary_3") lipu.minzoom = 2;
+
+            let sitelennimi = lipu.layout?.['text-field'];
+            if (sitelennimi && sitelennimi[0] != 'to-string') {
+                sitelennimi = [
+                    'coalesce',
+                    ['get', `name:${nimiToki}`],
+                    ["case",
+                        ["has", "name:nonlatin"],
+                        ["concat", ["get", "name:latin"], "\n", ["get", "name:nonlatin"]],
+                        ['get', 'name'],
+                    ],
+                ];
+                lipu.layout['text-field'] = sitelennimi;
+            }
+        }
+        sitelenma.setStyle(selo, {diff: true});
+    }
+    sitelenma.on('styledata', () => oPonaESelo());
+
+    sitelenma.addControl(new maplibregl.NavigationControl({
+        visualizePitch: true,
+        visualizeRoll: true,
+        showZoom: true,
+        showCompass: true
+    }));
+    sitelenma.addControl(new maplibregl.GeolocateControl());
+    sitelenma.addControl(new maplibregl.GlobeControl());
+    sitelenma.addControl(new maplibregl.ScaleControl({unit: 'metric'}));
+    sitelenma.addControl(new maplibregl.ScaleControl({unit: 'imperial'}));
+
+    sitelenma.once('styledata', async () => {
+        let jan = JSON.parse(sitelenma.getContainer().dataset.jan);
+
+        // jaki mute. taso ona li tan ijo - ilo sin pi sitelen ma li pana e
+        // nena lili mute lon lipu la nena ale li tawa e ona sama la ni li moku
+        // e wawa ilo mute. (ilo pini li pana e nena ale tawa lipu wan li tawa
+        // e lipu taso.) pali mute la mi lukin pona e ni kepeken ni: nena li
+        // kama lon insa pi sitelen ma li ijo ante ala. taso ni li sama ni: mi
+        // pali sin e nasin ale ilo ni: ona li pona lukin e nena li pona pilin
+        // e ona. sona mi la ni taso li weka e ni: ilo li moku e wawa mute...
+        // la mi awen e jaki mute ni lon ni tawa tenpo kama.
+
+        // function oJoESitelen(nasin, wekataninsa) {
+        //     return new Promise((pinipona, pinipakala) => {
+        //         let sitelen = new Image();
+        //         sitelen.onload = () => pinipona({sitelen, suli: [sitelen.width, sitelen.height], wekataninsa});
+        //         sitelen.onerror = pinipakala;
+        //         sitelen.src = nasin;
+        //     });
+        // }
+
+        // let sitelenNena = await oJoESitelen(sitelenNenaLaNasin, [0,-14]);
+        // sitelenma.addImage('nena', sitelenNena.sitelen);
+
+        // sitelenma.addSource('jan', {
+        //     type: 'geojson',
+        //     data: jan,
+        // });
+        // sitelenma.addLayer({
+        //     id: 'jan',
+        //     type: 'symbol',
+        //     source: 'jan',
+        //     layout: {
+        //         'icon-image': 'nena',
+        //         'icon-offset': sitelenNena.wekataninsa,
+        //         'icon-overlap': 'always',
+        //     },
+        //     paint: {
+        //         'icon-opacity': 0.5,
+        //     }
+        // });
+
+        // // mi pali ni pi suli mute tawa ni taso: lipu lili sona li kama ala lon
+        // // insa pi sitelen nena li tawa selo. seme a la nasin ilo pi
+        // // sitelen ma li ken ala pana taso e nasin ni?!
+        // //
+        // // mi lawa ala e poka ona la, nena pi lipu lili li tawa ma jan. mi
+        // // o nanpa e tawa ni: tan ma jan (lon sitelen nena) tawa selo pi
+        // // sitelen nena. taso mi o pali mute e ni tawa selo ona tu tu tu
+        // // tu. seme.
+        // //
+        // let suliSitelen = sitelenNena.suli;
+        // let insaSitelen = new Point(Math.floor(suliSitelen[0]/2), Math.floor(suliSitelen[1]/2));
+        // let wekaTanInsa = new Point(sitelenNena.wekataninsa[0], sitelenNena.wekataninsa[1]);
+        // let pininena = insaSitelen.sub(wekaTanInsa);
+        // let seloSewi = new Point(insaSitelen.x, 0);
+        // let seloAnpa = new Point(insaSitelen.x, suliSitelen[1]);
+        // let offset = {
+        //     'top': seloAnpa.sub(pininena),
+        //     // 'top-left': null,
+        //     // 'top-right': null,
+        //     'bottom': seloSewi.sub(pininena),
+        //     // 'bottom-left': null,
+        //     // 'bottom-right': null,
+        //     // 'left': null,
+        //     // 'right': null,
+        // };
+        // console.log(offset);
+
+        // function oPaliELipuSona(janWan) {
+        //     let tokiJan = document.createElement('div');
+        //     let nimiJan = tokiJan.appendChild(document.createElement('h3'));
+        //     let sonaJan = tokiJan.appendChild(document.createElement('span'));
+        //     nimiJan.innerText = janWan.properties.name;
+        //     sonaJan.innerText = janWan.properties.description;
+        //     return new maplibregl.Popup({offset}).setDOMContent(tokiJan);
+        // }
+        // sitelenma.on('click', 'jan', (e) => {
+        //     const coordinates = e.features[0].geometry.coordinates.slice();
+
+        //     // Ensure that if the map is zoomed out such that multiple
+        //     // copies of the feature are visible, the popup appears
+        //     // over the copy being pointed to.
+        //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+        //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+        //     }
+
+        //     oPaliELipuSona(e.features[0])
+        //         .setLngLat(coordinates)
+        //         .addTo(sitelenma);
+        // });
+
+        for (let {data: janWan} of jan) {
+            let tokiJan = document.createElement('div');
+            let nimiJan = tokiJan.appendChild(document.createElement('h3'));
+            let sonaJan = tokiJan.appendChild(document.createElement('span'));
+            nimiJan.innerText = janWan.properties.name;
+            sonaJan.innerText = janWan.properties.description;
+            new maplibregl.Marker()
+                .setLngLat(janWan.geometry.coordinates)
+                .setPopup(new maplibregl.Popup().setDOMContent(tokiJan))
+                .setOpacity(0.5, 0)
+                .addTo(sitelenma);
+        }
+    });
+
+</script>
