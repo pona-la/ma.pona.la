@@ -76,6 +76,9 @@ html, body, #selo {
     import rtlPluginUrl from '/node_modules/@mapbox/mapbox-gl-rtl-text/dist/mapbox-gl-rtl-text.js?url';
     maplibregl.setRTLTextPlugin(rtlPluginUrl);
 
+    import Point from '@mapbox/point-geometry';
+    import sitelenNenaLaNasin from '/src/assets/nena.svg?url';
+
     const sitelenma = new maplibregl.Map({
         container: document.getElementById('sitelenma'),
         style: 'https://tiles.openfreemap.org/styles/liberty',
@@ -133,98 +136,106 @@ html, body, #selo {
         // e ona. sona mi la ni taso li weka e ni: ilo li moku e wawa mute...
         // la mi awen e jaki mute ni lon ni tawa tenpo kama.
 
-        // function oJoESitelen(nasin, wekataninsa) {
-        //     return new Promise((pinipona, pinipakala) => {
-        //         let sitelen = new Image();
-        //         sitelen.onload = () => pinipona({sitelen, suli: [sitelen.width, sitelen.height], wekataninsa});
-        //         sitelen.onerror = pinipakala;
-        //         sitelen.src = nasin;
-        //     });
-        // }
+        function oJoESitelen(nasin, wekataninsa) {
+            return new Promise((pinipona, pinipakala) => {
+                let sitelen = new Image();
+                sitelen.onload = () => pinipona({sitelen, suli: [sitelen.width, sitelen.height], wekataninsa});
+                sitelen.onerror = pinipakala;
+                sitelen.src = nasin;
+            });
+        }
 
-        // let sitelenNena = await oJoESitelen(sitelenNenaLaNasin, [0,-14]);
-        // sitelenma.addImage('nena', sitelenNena.sitelen);
+        let sitelenNena = await oJoESitelen(sitelenNenaLaNasin, [0,-14]);
+        sitelenma.addImage('nena', sitelenNena.sitelen);
 
-        // sitelenma.addSource('jan', {
-        //     type: 'geojson',
-        //     data: jan,
-        // });
-        // sitelenma.addLayer({
-        //     id: 'jan',
-        //     type: 'symbol',
-        //     source: 'jan',
-        //     layout: {
-        //         'icon-image': 'nena',
-        //         'icon-offset': sitelenNena.wekataninsa,
-        //         'icon-overlap': 'always',
-        //     },
-        //     paint: {
-        //         'icon-opacity': 0.5,
-        //     }
-        // });
+        sitelenma.addSource('jan', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: jan.map(({
+                    id,
+                    data: {geometry: {coordinates}, properties},
+                }) => ({
+                    type: 'Feature',
+                    id,
+                    geometry: {
+                        type: 'Point',
+                        coordinates,
+                    },
+                    properties: {
+                        ...properties,
+                        lon: coordinates[0],
+                        lat: coordinates[1],
+                    },
+                })),
+            },
+        });
+        sitelenma.addLayer({
+            id: 'jan',
+            type: 'symbol',
+            source: 'jan',
+            layout: {
+                'icon-image': 'nena',
+                'icon-offset': sitelenNena.wekataninsa,
+                'icon-overlap': 'always',
+            },
+            paint: {
+                'icon-opacity': 0.5,
+            }
+        });
 
-        // // mi pali ni pi suli mute tawa ni taso: lipu lili sona li kama ala lon
-        // // insa pi sitelen nena li tawa selo. seme a la nasin ilo pi
-        // // sitelen ma li ken ala pana taso e nasin ni?!
-        // //
-        // // mi lawa ala e poka ona la, nena pi lipu lili li tawa ma jan. mi
-        // // o nanpa e tawa ni: tan ma jan (lon sitelen nena) tawa selo pi
-        // // sitelen nena. taso mi o pali mute e ni tawa selo ona tu tu tu
-        // // tu. seme.
-        // //
-        // let suliSitelen = sitelenNena.suli;
-        // let insaSitelen = new Point(Math.floor(suliSitelen[0]/2), Math.floor(suliSitelen[1]/2));
-        // let wekaTanInsa = new Point(sitelenNena.wekataninsa[0], sitelenNena.wekataninsa[1]);
-        // let pininena = insaSitelen.sub(wekaTanInsa);
-        // let seloSewi = new Point(insaSitelen.x, 0);
-        // let seloAnpa = new Point(insaSitelen.x, suliSitelen[1]);
-        // let offset = {
-        //     'top': seloAnpa.sub(pininena),
-        //     // 'top-left': null,
-        //     // 'top-right': null,
-        //     'bottom': seloSewi.sub(pininena),
-        //     // 'bottom-left': null,
-        //     // 'bottom-right': null,
-        //     // 'left': null,
-        //     // 'right': null,
-        // };
-        // console.log(offset);
+        // mi pali ni pi suli mute tawa ni taso: lipu lili sona li kama ala lon
+        // insa pi sitelen nena li tawa selo. seme a la nasin ilo pi
+        // sitelen ma li ken ala pana taso e nasin ni?!
+        //
+        // mi lawa ala e poka ona la, nena pi lipu lili li tawa ma jan. mi
+        // o nanpa e tawa ni: tan ma jan (lon sitelen nena) tawa selo pi
+        // sitelen nena. taso mi o pali mute e ni tawa selo ona tu tu tu
+        // tu. seme.
+        //
+        let suliSitelen = sitelenNena.suli;
+        let insaSitelen = new Point(Math.floor(suliSitelen[0]/2), Math.floor(suliSitelen[1]/2));
+        let wekaTanInsa = new Point(sitelenNena.wekataninsa[0], sitelenNena.wekataninsa[1]);
+        let pininena = insaSitelen.sub(wekaTanInsa);
+        let seloSewi = new Point(insaSitelen.x, 0);
+        let seloAnpa = new Point(insaSitelen.x, suliSitelen[1]);
+        let seloOpen = new Point(0, insaSitelen.y);
+        let seloPini = new Point(suliSitelen[0], insaSitelen.y);
+        let offset = {
+            'top': seloAnpa.sub(pininena),
+            'top-left': new Point(seloPini.x, seloAnpa.y).sub(pininena),
+            'top-right': new Point(seloOpen.x, seloAnpa.y).sub(pininena),
+            'bottom': seloSewi.sub(pininena),
+            'bottom-left': new Point(seloPini.x, seloSewi.y).sub(pininena),
+            'bottom-right': new Point(seloOpen.x, seloSewi.y).sub(pininena),
+            'left': seloPini.sub(pininena),
+            'right': seloOpen.sub(pininena),
+        };
+        console.log(offset);
 
-        // function oPaliELipuSona(janWan) {
-        //     let tokiJan = document.createElement('div');
-        //     let nimiJan = tokiJan.appendChild(document.createElement('h3'));
-        //     let sonaJan = tokiJan.appendChild(document.createElement('span'));
-        //     nimiJan.innerText = janWan.properties.name;
-        //     sonaJan.innerText = janWan.properties.description;
-        //     return new maplibregl.Popup({offset}).setDOMContent(tokiJan);
-        // }
-        // sitelenma.on('click', 'jan', (e) => {
-        //     const coordinates = e.features[0].geometry.coordinates.slice();
-
-        //     // Ensure that if the map is zoomed out such that multiple
-        //     // copies of the feature are visible, the popup appears
-        //     // over the copy being pointed to.
-        //     while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-        //         coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-        //     }
-
-        //     oPaliELipuSona(e.features[0])
-        //         .setLngLat(coordinates)
-        //         .addTo(sitelenma);
-        // });
-
-        for (let {data: janWan} of jan) {
+        function oPaliELipuSona(janWan) {
             let tokiJan = document.createElement('div');
             let nimiJan = tokiJan.appendChild(document.createElement('h3'));
             let sonaJan = tokiJan.appendChild(document.createElement('span'));
             nimiJan.innerText = janWan.properties.name;
             sonaJan.innerText = janWan.properties.description;
-            new maplibregl.Marker()
-                .setLngLat(janWan.geometry.coordinates)
-                .setPopup(new maplibregl.Popup().setDOMContent(tokiJan))
-                .setOpacity(0.5, 0)
-                .addTo(sitelenma);
+            return new maplibregl.Popup({offset}).setDOMContent(tokiJan);
         }
+        sitelenma.on('click', 'jan', (e) => {
+            const {lon, lat} = e.features[0].properties;
+            const coordinates = [lon, lat];
+
+            // Ensure that if the map is zoomed out such that multiple
+            // copies of the feature are visible, the popup appears
+            // over the copy being pointed to.
+            while (Math.abs(e.lngLat.lng - lon) > 180) {
+                coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+            }
+
+            oPaliELipuSona(e.features[0])
+                .setLngLat(coordinates)
+                .addTo(sitelenma);
+        });
     });
 
 </script>
