@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 let jan = await getCollection('jan');
+let lasina = false;
 ---
 <!doctype html>
 <meta charset="utf-8" />
@@ -54,6 +55,7 @@ html, body, #selo {
 
 h1 {
     margin-bottom: 0.5rem;
+    margin: 0;
 }
 
 #sitelenma {
@@ -62,24 +64,59 @@ h1 {
     height: 100%;
 }
 
+.sewi {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 </style>
 
 <!-- selo -->
 <div id="selo">
     <div>
     <!-- toki -->
-    <div class="toki">
-        <h1>󱥬󱥔󱤧󱤬󱤰</h1>
-        <i>lipu ni pi sitelen Lasina li lon <a href="sitelen-lasina">ni</a></i>
+    <div class="toki" id="sitelenpona">
+        <div class="sewi" style="">
+            <h1>󱥬󱥔󱤧󱤬󱤰</h1>
+            <button onclick="sitelenLasina()">o sitelen Lasina</button>
+        </div>
         <p>󱤪󱤰󱥁󱤡󱥄󱤮󱤉󱥁󱦝󱤰󱤡󱤑󱥍󱥬󱥔󱤧󱤬󱥙 　󱥞󱥷󱤡<a href="https://forms.gle/nEGMiM73Td5PWwZP8">󱥄󱥌󱤉󱥞󱥩󱤪󱤰</a>
         <aside>󱥁󱤧󱥷󱥞󱤂󱤡, 󱥞󱤃󱤉<a href="https://discord.gg/BCVCVJbVdQ">󱤬󱤎󱦐󱥛󱦜󱤜󱦝󱦑</a>󱤇󱥙</aside>
     </div>
+
+    <div class="toki" id="sitelenlasina" style="display: none">
+        <div class="sewi" style="">
+            <h1>toki pona li lon ma!</h1>
+            <button onclick="sitelenPona()" style="height: 1.5rem;">o sitelen pona</button>
+        </div>
+        <p>lipu ma ni la o lukin e ni: ma la jan pi toki pona li lon seme? sina wile la <a href="https://forms.gle/nEGMiM73Td5PWwZP8">o pana e sina tawa lipu ma!</a>
+        <aside>ni li wile sina ala la, sina alasa e <a href="https://discord.gg/BCVCVJbVdQ"><em>ma pona pi toki pona</em> lon ilo Siko</a> anu seme?</aside>
+    </div>
+
     </div> <!-- poki selo namako li lon tan ni: ni ala la weka sewi pi poki h1 en weka sewi pi poki .toki li kama weka tu li kama ala wan li suli ike lukin. -->
 
     <!-- lipu ma -->
     <div id="sitelenma" data-jan={JSON.stringify(jan)}>
     </div>
 </div>
+
+<script is:inline>
+    const TokiPiSitelenPona = document.getElementById("sitelenpona");
+    const TokiPiSitelenLasina = document.getElementById("sitelenlasina");
+
+    function sitelenPona() {
+        TokiPiSitelenPona.style.display = "block";
+        TokiPiSitelenLasina.style.display = "none";
+    }
+
+    function sitelenLasina() {
+        TokiPiSitelenPona.style.display = "none";
+        TokiPiSitelenLasina.style.display = "block";
+    }
+
+    sitelenPona();
+</script>
 
 <script>
     import * as maplibregl from 'maplibre-gl';
