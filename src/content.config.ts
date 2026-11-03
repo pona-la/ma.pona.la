@@ -5,7 +5,8 @@ function uMap(url: string) {
     return async () => {
         let sona = await fetch(url);
         let sonaJson = await sona.json();
-        return sonaJson.features;
+        // ala li lon insa pi poki Properties la mi weka e ijo pi poki ni
+        return sonaJson.features.filter(ijo => Object.keys(ijo.properties).length);
     };
 }
 
