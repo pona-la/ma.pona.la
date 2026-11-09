@@ -5,7 +5,14 @@ function uMap(url: string) {
     return async () => {
         let sona = await fetch(url);
         let sonaJson = await sona.json();
-        return sonaJson.features;
+
+        return sonaJson.features.filter(ijo => {
+            if (Object.keys(ijo.properties).length == 0) {
+                console.log("ijo ni li nasa, mi pana ala e ona:", ijo);
+                return false;
+            }
+            return true
+        });
     };
 }
 
